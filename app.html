@@ -1,0 +1,464 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Analisis Data Donor Darah (Brython)</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Brython CDN -->
+    <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/brython@3.11.2/brython.min.js"></script>
+    <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/brython@3.11.2/brython_stdlib.js"></script>
+    <style>
+        /* Menggunakan font Inter dan menerapkan latar belakang warna khusus dengan gradien halus */
+        body { 
+            font-family: 'Inter', sans-serif; 
+            background-color: #e8a04e; /* Warna utama (muted orange) */
+            background-image: linear-gradient(135deg, rgba(255, 255, 255, 0.2) 0%, rgba(255, 255, 255, 0) 70%); /* Gradien putih halus */
+        }
+        /* Styling untuk textarea agar mudah digunakan */
+        #input_dds_records {
+            min-height: 180px; 
+            font-family: 'Consolas', 'Courier New', monospace;
+            font-size: 0.9em;
+            resize: vertical;
+            transition: all 0.3s ease-in-out;
+        }
+        /* Mengubah warna latar belakang output agar menyerupai editor kode gelap */
+        #output_result {
+            background-color: #1f2937; /* Warna gelap */
+            color: #d1d5db; /* Teks terang */
+            min-height: 350px; 
+            transition: box-shadow 0.4s ease-in-out;
+        }
+        #output_result:hover {
+            box-shadow: 0 10px 15px -3px rgba(79, 70, 229, 0.5), 0 4px 6px -2px rgba(79, 70, 229, 0.05); /* Shadow ungu/biru saat hover */
+        }
+        /* Menyesuaikan warna teks umum di output agar lebih netral (putih) */
+        #output_text {
+            color: #ffffff; /* Teks output utama (putih) */
+        }
+    </style>
+</head>
+<body onload="brython()">
+    <div class="min-h-screen p-4 sm:p-8 flex items-center justify-center">
+        <!-- Kontainer Utama: Tampilan Premium dan sedikit Transparan -->
+        <div class="w-full max-w-6xl mx-auto bg-white/95 shadow-2xl rounded-3xl p-6 md:p-10 border border-white/50 backdrop-blur-md">
+            <h1 class="text-3xl font-extrabold text-indigo-800 mb-8 border-b-4 border-indigo-200 pb-4">Sistem Analisis & Optimalisasi Logistik Darah</h1>
+            
+            <!-- Struktur Dua Kolom (Kiri: Input, Kanan: Output) -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-10">
+                
+                <!-- KIRI: Seleksi dan Input Data -->
+                <div class="md:border-r md:pr-5 border-gray-200">
+                    <h2 class="text-xl font-bold text-gray-800 mb-4">Panel Data Masukan & Kontrol Analisis</h2>
+                    
+                    <!-- 1. Pemilihan Subproblem -->
+                    <div class="mb-6 border-b pb-4">
+                        <h3 class="text-lg font-semibold text-gray-700 mb-3">1. Mode Analisis (Subproblem)</h3>
+                        <div id="subproblem_selector" class="flex flex-wrap gap-3 text-sm">
+                            <!-- Styling radio buttons dengan transisi -->
+                            <label class="inline-flex items-center bg-gray-100 text-gray-700 px-3 py-1.5 rounded-full cursor-pointer transition duration-300 ease-in-out hover:bg-indigo-100 hover:text-indigo-800 shadow-sm hover:shadow-md">
+                                <input type="radio" name="subproblem" value="1" checked 
+                                    class="form-radio h-4 w-4 text-indigo-600 focus:ring-indigo-500 transition duration-300 ease-in-out border-gray-400 checked:bg-indigo-600">
+                                <span class="ml-2 font-medium">Subproblem 1: Total Pendonor</span>
+                            </label>
+                            <label class="inline-flex items-center bg-gray-100 text-gray-700 px-3 py-1.5 rounded-full cursor-pointer transition duration-300 ease-in-out hover:bg-indigo-100 hover:text-indigo-800 shadow-sm hover:shadow-md">
+                                <input type="radio" name="subproblem" value="2" 
+                                    class="form-radio h-4 w-4 text-indigo-600 focus:ring-indigo-500 transition duration-300 ease-in-out border-gray-400 checked:bg-indigo-600">
+                                <span class="ml-2 font-medium">Subproblem 2: Detail Golongan Darah</span>
+                            </label>
+                            <label class="inline-flex items-center bg-gray-100 text-gray-700 px-3 py-1.5 rounded-full cursor-pointer transition duration-300 ease-in-out hover:bg-indigo-100 hover:text-indigo-800 shadow-sm hover:shadow-md">
+                                <input type="radio" name="subproblem" value="3" 
+                                    class="form-radio h-4 w-4 text-indigo-600 focus:ring-indigo-500 transition duration-300 ease-in-out border-gray-400 checked:bg-indigo-600">
+                                <span class="ml-2 font-medium">Subproblem 3: Optimasi Pengambilan</span>
+                            </label>
+                            <label class="inline-flex items-center bg-gray-100 text-gray-700 px-3 py-1.5 rounded-full cursor-pointer transition duration-300 ease-in-out hover:bg-indigo-100 hover:text-indigo-800 shadow-sm hover:shadow-md">
+                                <input type="radio" name="subproblem" value="4" 
+                                    class="form-radio h-4 w-4 text-indigo-600 focus:ring-indigo-500 transition duration-300 ease-in-out border-gray-400 checked:bg-indigo-600">
+                                <span class="ml-2 font-medium">Subproblem 4: Optimasi Cepat</span>
+                            </label>
+                        </div>
+                    </div>
+
+                    <!-- 2. Input Data (Structured Input) -->
+                    <div class="mb-6 space-y-4">
+                        <h3 class="text-lg font-semibold text-gray-700 mb-3 border-b border-gray-300 pb-2">2. Data Operasional (Masukan Terstruktur)</h3>
+
+                        <!-- A. Metadata N & M -->
+                        <div class="p-3 bg-gray-100 rounded-xl shadow-md border border-gray-200">
+                            <p class="text-sm font-bold text-indigo-700 mb-2">A. Parameter Utama (N & M)</p>
+                            <div class="flex gap-4">
+                                <div class="flex-1">
+                                    <label for="input_N" class="text-xs font-medium text-gray-600">N (Jumlah Total DDS)</label>
+                                    <input id="input_N" type="number" placeholder="Contoh: 4" class="w-full p-2 border border-gray-300 rounded-lg focus:ring-indigo-500 focus:border-indigo-500 transition shadow-sm">
+                                </div>
+                                <div class="flex-1">
+                                    <label for="input_M" class="text-xs font-medium text-gray-600">M (Jumlah Desa/Lokasi)</label>
+                                    <input id="input_M" type="number" placeholder="Contoh: 3" class="w-full p-2 border border-gray-300 rounded-lg focus:ring-indigo-500 focus:border-indigo-500 transition shadow-sm">
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- B. Data DDS Record -->
+                        <div class="p-3 bg-gray-100 rounded-xl shadow-md border border-gray-200">
+                            <h4 class="text-sm font-bold text-indigo-700 mb-2">B. Data Setiap Pendonor (DDS Records)</h4>
+                            <p class="text-xs text-gray-500 mb-2">Masukkan data dengan format: <span class="font-mono text-xs text-gray-700">KodeDesa GolonganDarah Volume</span> (Satu baris per pendonor)</p>
+                            <textarea id="input_dds_records" placeholder="Contoh:
+1 1 250
+2 4 500
+1 1 300
+3 2 450" 
+                            class="w-full p-3 border border-gray-400 rounded-xl focus:ring-indigo-500 focus:border-indigo-500 shadow-inner" ></textarea>
+                        </div>
+
+                        <!-- C. Kebutuhan (Hanya Sub 3/4) -->
+                        <div class="p-3 bg-red-50 border border-red-200 rounded-xl shadow-md">
+                            <p class="text-sm font-bold text-red-700 mb-2">C. Kebutuhan Darah (Untuk Subproblem 3 & 4)</p>
+                            <div class="flex gap-4">
+                                <div class="flex-1">
+                                    <label for="input_gd_kebutuhan" class="text-xs font-medium text-gray-600">Kode GD Kebutuhan (1=A, 4=O)</label>
+                                    <input id="input_gd_kebutuhan" type="number" placeholder="Contoh: 1" class="w-full p-2 border border-red-300 rounded-lg focus:ring-red-500 focus:border-red-500 transition shadow-sm">
+                                </div>
+                                <div class="flex-1">
+                                    <label for="input_volume_kebutuhan" class="text-xs font-medium text-gray-600">Volume Kebutuhan (ml)</label>
+                                    <input id="input_volume_kebutuhan" type="number" placeholder="Contoh: 500" class="w-full p-2 border border-red-300 rounded-lg focus:ring-red-500 focus:border-red-500 transition shadow-sm">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Tombol dan Status -->
+                    <button id="run_button" onclick="brython(1); run_analysis()"
+                            class="w-full px-8 py-3 bg-indigo-600 text-white font-extrabold rounded-xl shadow-lg hover:bg-indigo-700 transition duration-300 ease-in-out transform hover:scale-[1.01] active:scale-[0.98] focus:outline-none focus:ring-4 focus:ring-indigo-300/70">
+                        ▶ EKSEKUSI ANALISIS
+                    </button>
+                    <p id="status_message" class="mt-4 text-sm text-red-500 hidden text-center font-medium animate-pulse">Memproses data...</p>
+                </div>
+                
+                <!-- KANAN: Output Hasil (Console Vibe - Terstruktur) -->
+                <div>
+                    <h2 class="text-xl font-bold text-gray-800 mb-4">Laporan Hasil Analisis</h2>
+                    
+                    <div id="output_result" class="p-6 border border-gray-700 rounded-xl shadow-2xl">
+                        <!-- Konten output akan disuntikkan di sini sebagai HTML -->
+                        <div id="output_text">Hasil analisis akan ditampilkan dalam format laporan terstruktur di sini.</div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+    <!-- Python Script menggunakan Brython -->
+    <script type="text/python">
+        from browser import document, console, html
+        from collections import defaultdict
+        import sys 
+        
+        # Konstanta untuk kode golongan darah
+        GOLONGAN_DARAH_MAP = {
+            1: "A",
+            2: "B",
+            3: "AB",
+            4: "O"
+        }
+
+        def get_input_lines(input_text):
+            """Memecah string input dari textarea menjadi daftar baris."""
+            return input_text.splitlines()
+
+        def parse_data(input_lines):
+            """Mengurai semua angka dari input lines menjadi satu list datar."""
+            data_points = []
+            for line in input_lines:
+                try:
+                    # Mengambil angka dan menambahkannya ke daftar poin data
+                    data_points.extend([int(p) for p in line.strip().split() if p])
+                except ValueError:
+                    continue
+            return data_points
+
+        # --- SUBPROBLEM 1 ---
+        def solve_subproblem_1(input_lines):
+            data_points = parse_data(input_lines)
+            
+            if len(data_points) < 2:
+                return f"<span class='text-red-400 font-bold'>Error:</span> Input tidak memadai. Minimal N dan M diperlukan."
+
+            try:
+                N = data_points[0]  # Jumlah DDS
+                M = data_points[1]  # Jumlah Desa
+            except IndexError:
+                return f"<span class='text-red-400 font-bold'>Error:</span> N atau M tidak ditemukan."
+
+            donor_counts = defaultdict(int)
+            data_index = 2
+            records_processed = 0
+
+            # Memproses N record DDS
+            while data_index + 2 < len(data_points) and records_processed < N:
+                kode_desa = data_points[data_index]
+                if 1 <= kode_desa <= M:
+                    donor_counts[kode_desa] += 1
+                data_index += 3
+                records_processed += 1
+
+            # GENERASI OUTPUT HTML TERSTRUKTUR
+            html_output = ["<h4 class='text-xl font-extrabold text-blue-400 mb-3'>Rekapitulasi Total Pendonor (Subproblem 1)</h4>"]
+            html_output.append("<ul class='list-none space-y-2 p-2 rounded-lg bg-gray-700/50'>")
+            
+            total_semua_desa = 0
+            for i in range(1, M + 1):
+                jumlah = donor_counts.get(i, 0)
+                total_semua_desa += jumlah
+                html_output.append(
+                    f"<li class='flex justify-between border-b border-gray-600 pb-1'>"
+                    f"<span>Desa <span class='font-bold text-yellow-400'>0{i}</span>:</span>"
+                    f"<span class='font-extrabold text-white'>{jumlah} Pendonor</span>"
+                    f"</li>"
+                )
+            
+            html_output.append("</ul>")
+            html_output.append(f"<p class='mt-4 text-lg font-bold text-white'>Total Keseluruhan Pendonor Terdaftar: <span class='text-yellow-400'>{total_semua_desa}</span> orang.</p>")
+            return "\n".join(html_output)
+
+        # --- SUBPROBLEM 2 ---
+        def solve_subproblem_2(input_lines):
+            data_points = parse_data(input_lines)
+            
+            if len(data_points) < 2:
+                return f"<span class='text-red-400 font-bold'>Error:</span> Input tidak memadai. Minimal N dan M diperlukan."
+
+            try:
+                N = data_points[0]  # Jumlah DDS
+                M = data_points[1]  # Jumlah Desa
+            except IndexError:
+                return f"<span class='text-red-400 font-bold'>Error:</span> N atau M tidak ditemukan."
+
+            stats_by_desa_gd = defaultdict(lambda: defaultdict(lambda: [0, 0]))
+            
+            data_index = 2
+            records_processed = 0
+
+            # Pemrosesan data DDS
+            while data_index + 2 < len(data_points) and records_processed < N:
+                try:
+                    kode_desa = data_points[data_index]
+                    golongan_darah = data_points[data_index + 1]
+                    volume_darah = data_points[data_index + 2]
+
+                    if 1 <= kode_desa <= M and 1 <= golongan_darah <= 4:
+                        stats_by_desa_gd[kode_desa][golongan_darah][0] += 1
+                        stats_by_desa_gd[kode_desa][golongan_darah][1] += volume_darah
+
+                    data_index += 3
+                    records_processed += 1
+                except IndexError:
+                    break
+            
+            # GENERASI OUTPUT HTML TERSTRUKTUR
+            html_output = ["<h4 class='text-xl font-extrabold text-blue-400 mb-3'>Laporan Detail Golongan Darah & Volume (Subproblem 2)</h4>"]
+            
+            for desa_ke in range(1, M + 1):
+                html_output.append(f"<div class='p-3 mt-4 border border-blue-500 rounded-lg bg-gray-700/70'>")
+                html_output.append(f"<h5 class='text-lg font-bold text-yellow-400'>Desa 0{desa_ke}:</h5>")
+                html_output.append("<ul class='list-none space-y-1 mt-1 text-sm'>")
+                
+                for gd_code in sorted(GOLONGAN_DARAH_MAP.keys()):
+                    count, volume = stats_by_desa_gd[desa_ke][gd_code]
+                    gd_label = GOLONGAN_DARAH_MAP.get(gd_code, "Unknown")
+                    
+                    html_output.append(
+                        f"<li class='flex justify-between'>"
+                        f"<span>GD <span class='font-extrabold text-white'>{gd_label}</span>:</span>"
+                        f"<span><span class='font-bold text-green-400'>{count}</span> Pendonor / <span class='font-bold text-red-400'>{volume}</span> ml</span>"
+                        f"</li>"
+                    )
+                html_output.append("</ul>")
+                html_output.append("</div>")
+
+            return "\n".join(html_output)
+
+        # --- SUBPROBLEM 3 & 4 (Optimasi Pengambilan) ---
+        def solve_subproblem_3(input_lines):
+            data_points = parse_data(input_lines)
+            
+            if len(data_points) < 5: 
+                return f"<span class='text-red-400 font-bold'>Error:</span> Input tidak memadai. Diperlukan N, M, data DDS, GD Kebutuhan, dan Volume Kebutuhan."
+
+            try:
+                N = data_points[0]  # Jumlah DDS
+                M = data_points[1]  # Jumlah Desa
+                
+                kebutuhan_gd_code = data_points[-2]
+                kebutuhan_volume = data_points[-1]
+                
+                if not (1 <= kebutuhan_gd_code <= 4):
+                     return f"<span class='text-red-400 font-bold'>Error:</span> Golongan darah kebutuhan ({kebutuhan_gd_code}) tidak valid."
+                
+                kebutuhan_gd_label = GOLONGAN_DARAH_MAP.get(kebutuhan_gd_code, "GD Tidak Dikenal")
+                     
+            except IndexError:
+                return f"<span class='text-red-400 font-bold'>Error:</span> N, M, GD Kebutuhan, atau Volume Kebutuhan tidak ditemukan."
+
+            dds_data = data_points[2:-2] 
+            available_volume_by_desa = defaultdict(int)
+            
+            data_index = 0
+            records_processed = 0
+
+            # Mengumpulkan volume yang tersedia untuk GD yang dibutuhkan
+            while data_index + 2 < len(dds_data) and records_processed < N:
+                kode_desa = dds_data[data_index]
+                golongan_darah = dds_data[data_index + 1]
+                volume_darah = data_points[data_index + 2]
+
+                if 1 <= kode_desa <= M and golongan_darah == kebutuhan_gd_code:
+                    available_volume_by_desa[kode_desa] += volume_darah
+                
+                data_index += 3
+                records_processed += 1
+                
+            # Menerapkan Algoritma Greedy (Volume terbesar duluan)
+            sorted_donors = [(volume, desa_code) for desa_code, volume in available_volume_by_desa.items() if volume > 0]
+            sorted_donors.sort(key=lambda x: x[0], reverse=True)
+            
+            volume_terkumpul = 0
+            desa_terpilih = []
+            
+            for volume, kode_desa in sorted_donors:
+                if volume_terkumpul < kebutuhan_volume:
+                    volume_diambil = volume
+                    volume_terkumpul += volume_diambil
+                    desa_terpilih.append((kode_desa, volume_diambil))
+                else:
+                    break 
+
+            # GENERASI OUTPUT HTML TERSTRUKTUR
+            html_output = ["<h4 class='text-xl font-extrabold text-blue-400 mb-3'>Laporan Optimasi Pengambilan Darah (Subproblem 3/4)</h4>"]
+            html_output.append(f"<p class='text-lg font-semibold text-white'>Kebutuhan Target: <span class='text-yellow-400 font-extrabold'>{kebutuhan_volume} ml</span> Darah Golongan <span class='text-yellow-400 font-extrabold'>{kebutuhan_gd_label}</span></p>")
+            html_output.append("<hr class='my-3 border-gray-600'>")
+
+            if volume_terkumpul >= kebutuhan_volume:
+                surplus = volume_terkumpul - kebutuhan_volume
+                
+                html_output.append("<h5 class='text-lg font-bold text-green-400'>Status: Kebutuhan <span class='text-white'>TERPENUHI</span></h5>")
+                html_output.append(f"<p class='text-md mt-2 text-white'>Total Volume Terkumpul: <span class='font-extrabold text-green-400'>{volume_terkumpul} ml</span> (Surplus <span class='font-extrabold'>{surplus} ml</span>)</p>")
+                
+                # Daftar Desa Terpilih (diurutkan berdasarkan Kode Desa)
+                desa_terpilih.sort(key=lambda x: x[0])
+                
+                html_output.append("<h5 class='text-lg font-bold text-blue-400 mt-4'>Desa yang Dioptimalkan (Diambil):</h5>")
+                html_output.append("<ul class='list-none space-y-1 p-2 bg-gray-700/50 rounded-lg'>")
+                for kode_desa, volume in desa_terpilih:
+                    html_output.append(
+                        f"<li class='flex justify-between'>"
+                        f"<span>Desa <span class='font-bold text-yellow-400'>0{kode_desa}</span>:</span>"
+                        f"<span class='font-extrabold text-white'>{volume} ml</span>"
+                        f"</li>"
+                    )
+                html_output.append("</ul>")
+                
+                return "\n".join(html_output)
+            else:
+                kekurangan = kebutuhan_volume - volume_terkumpul
+                
+                html_output.append("<h5 class='text-lg font-bold text-red-400'>Status: Kebutuhan <span class='text-white'>KURANG</span></h5>")
+                html_output.append(f"<p class='text-md mt-2 text-white'>Total Volume Terkumpul: <span class='font-extrabold text-red-400'>{volume_terkumpul} ml</span></p>")
+                html_output.append(f"<p class='text-md text-white'>Kekurangan yang Dibutuhkan: <span class='font-extrabold text-yellow-400'>{kekurangan} ml</span></p>")
+
+                # Daftar Desa yang Berkontribusi
+                if desa_terpilih:
+                    html_output.append("<h5 class='text-lg font-bold text-blue-400 mt-4'>Desa yang Telah Berkontribusi:</h5>")
+                    html_output.append("<ul class='list-none space-y-1 p-2 bg-gray-700/50 rounded-lg'>")
+                    for kode_desa, volume in desa_terpilih:
+                         html_output.append(
+                        f"<li class='flex justify-between'>"
+                        f"<span>Desa <span class='font-bold text-yellow-400'>0{kode_desa}</span>:</span>"
+                        f"<span class='font-extrabold text-white'>{volume} ml</span>"
+                        f"</li>"
+                    )
+                    html_output.append("</ul>")
+                else:
+                    html_output.append("<p class='mt-3 text-white/70'>Tidak ada desa yang memiliki stok golongan darah yang dibutuhkan.</p>")
+
+
+                return "\n".join(html_output)
+
+        # --- SUBPROBLEM 4 (Versi Efisien, logic sama dengan 3) ---
+        def solve_subproblem_4(input_lines):
+            return solve_subproblem_3(input_lines)
+
+
+        def run_analysis(event=None):
+            """Fungsi utama yang dipanggil saat tombol ditekan."""
+            try:
+                # 1. Ambil data dari UI (Input Terpisah)
+                
+                N_val = document["input_N"].value
+                M_val = document["input_M"].value
+                DDS_records = document["input_dds_records"].value
+                GD_Keb = document["input_gd_kebutuhan"].value
+                Volume_Keb = document["input_volume_kebutuhan"].value
+
+                # VALIDASI INPUT MINIMAL (N dan M harus ada)
+                if not N_val or not M_val:
+                    document["output_text"].innerHTML = f"<span class='text-red-400 font-bold'>Error:</span> Harap masukkan nilai N (Jumlah DDS) dan M (Jumlah Desa)."
+                    return
+
+                # Menggabungkan input menjadi satu format string yang dipahami oleh fungsi solve_subproblem_X
+                input_text = f"{N_val} {M_val}\n" + DDS_records
+                
+                selected_radio = document["subproblem_selector"].select('input[name="subproblem"]:checked')
+                if not selected_radio:
+                    document["output_text"].innerHTML = f"<span class='text-red-400 font-bold'>Error:</span> Silakan pilih Mode Analisis."
+                    return
+                
+                subproblem_id = int(selected_radio[0].value)
+
+                # Tambahkan Kebutuhan hanya untuk Subproblem 3 & 4
+                if subproblem_id in [3, 4]:
+                    if not GD_Keb or not Volume_Keb:
+                         document["output_text"].innerHTML = f"<span class='text-red-400 font-bold'>Error:</span> Subproblem 3 & 4 memerlukan data Kebutuhan Darah (Golongan Darah dan Volume)."
+                         return
+                    input_text += f"\n{GD_Keb} {Volume_Keb}"
+
+
+                document["status_message"].classList.remove("hidden")
+                document["output_text"].innerHTML = "<div class='text-white animate-pulse'>Menjalankan subproblem, mohon tunggu...</div>"
+                
+                # 2. Panggil fungsi yang sesuai
+                input_lines = get_input_lines(input_text)
+                
+                if subproblem_id == 1:
+                    result = solve_subproblem_1(input_lines)
+                elif subproblem_id == 2:
+                    result = solve_subproblem_2(input_lines)
+                elif subproblem_id == 3:
+                    result = solve_subproblem_3(input_lines)
+                elif subproblem_id == 4:
+                    result = solve_subproblem_4(input_lines)
+                else:
+                    result = "Error: Subproblem tidak dikenal."
+
+                # 3. Tampilkan hasil dan sembunyikan status
+                document["output_text"].innerHTML = result
+                document["status_message"].classList.add("hidden")
+
+            except Exception as e:
+                # Tangani error Brython dan tampilkan di output
+                error_message = f"<span class='text-red-400 font-bold'>Error Sistem:</span> Terjadi Kesalahan Teknis: {e}"
+                document["output_text"].innerHTML = error_message
+                console.error(error_message)
+                document["status_message"].classList.add("hidden")
+
+        # Inisialisasi: Mengaitkan fungsi ke tombol
+        def initialize():
+            document["run_button"].bind("click", run_analysis)
+
+        initialize()
+        
+    </script>
+</body>
+</html>
